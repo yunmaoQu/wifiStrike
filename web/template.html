@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi 攻击工具</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">WiFi 攻击工具</h1>
+
+        <form id="attackForm" method="POST" action="/attack">
+            <div class="mb-3">
+                <label for="attack_type" class="form-label">选择攻击类型:</label>
+                <select class="form-control" id="attack_type" name="attack_type" required>
+                    <option value="deauth">Deauth 攻击</option><option value="evil_twin">Evil Twin 攻击</option>
+                    <option value="beacon_flood">Beacon Flood 攻击</option>
+                    <option value="wps_pin">WPS PIN 破解</option>
+                </select>
+            </div>
+
+            <!-- Deauth 攻击参数 -->
+            <div id="deauthFields" class="attack-fields">
+                <div class="mb-3">
+                    <label for="target_mac" class="form-label">目标设备 MAC 地址 (Station):</label>
+                    <input type="text" class="form-control" id="target_mac" name="target_mac" placeholder="aa:bb:cc:dd:ee:ff">
+                </div>
+                <div class="mb-3">
+                    <label for="ap_mac" class="form-label">目标 AP MAC 地址:</label>
+                    <input type="text" class="form-control" id="ap_mac" name="ap_mac" placeholder="11:22:33:44:55:66">
+                </div>
+                <div class="mb-3">
+                    <label for="iface" class="form-label">无线接口 (例如: wlan0mon):</label>
+                    <input type="text" class="form-control" id="iface" name="iface" placeholder="wlan0mon">
+                </div>
+            </div>
+
+            <!-- Evil Twin 攻击参数 -->
+            <div id="evilTwinFields" class="attack-fields d-none">
+                <div class="mb-3">
+                    <label for="ssid" class="form-label">伪造的 SSID:</label>
+                    <input type="text" class="form-control" id="ssid" name="ssid" placeholder="FakeNetwork">
+                </div>
+                <div class="mb-3">
+                    <label for="bssid" class="form-label">伪造的 BSSID (例如: 12:34:56:78:9A:BC):</label>
+                    <input type="text" class="form-control" id="bssid" name="bssid" placeholder="12:34:56:78:9A:BC">
+                </div>
+                <div class="mb-3">
+                    <label for="iface" class="form-label">无线接口 (例如: wlan0mon):</label>
+                    <input type="text" class="form-control" id="iface" name="iface" placeholder="wlan0mon">
+                </div>
+            </div>
+
+            <!-- Beacon Flood 攻击参数 -->
+            <div id="beaconFloodFields" class="attack-fields d-none">
+                <div class="mb-3">
+                    <label for="iface" class="form-label">无线接口 (例如: wlan0mon):</label>
+                    <input type="text" class="form-control" id="iface" name="iface" placeholder="wlan0mon">
+                </div>
+            </div>
+
+            <!-- WPS PIN 破解参数 -->
+            <div id="wpsPinFields" class="attack-fields d-none">
+                <div class="mb-3">
+                    <label for="ap_mac" class="form-label">目标 AP MAC 地址:</label>
+                    <input type="text" class="form-control" id="ap_mac" name="ap_mac" placeholder="11:22:33:44:55:66">
+                </div>
+                <div class="mb-3">
+                    <label for="iface" class="form-label">无线接口 (例如: wlan0mon):</label>
+                    <input type="text" class="form-control" id="iface" name="iface" placeholder="wlan0mon">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">启动攻击</button>
+        </form>
+
+        <!-- 结果展示 -->
+        <div id="result" class="mt-4"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 动态切换表单字段
+        const attackTypeSelect = document.getElementById('attack_type');
+        const attackFields = {
+            deauth: document.getElementById('deauthFields'),
+            evil_twin: document.getElementById('evilTwinFields'),
+            beacon_flood: document.getElementById('beaconFloodFields'),
+            wps_pin: document.getElementById('wpsPinFields')
+        };
+
+        // 初始化，隐藏所有字段
+        Object.values(attackFields).forEach(field => field.classList.add('d-none'));
+
+        // 监听攻击类型的选择变化，显示相应的字段
+        attackTypeSelect.addEventListener('change', function () {
+            Object.values(attackFields).forEach(field => field.classList.add('d-none'));  // 隐藏所有字段
+            attackFields[this.value].classList.remove('d-none');  // 显示对应的字段
+        });
+
+        // 提交表单时发送 AJAX 请求，启动攻击
+        document.getElementById('attackForm').addEventListener('submit', function (event) {
+            event.preventDefault();  // 阻止表单默认提交行为
+
+            const formData = new FormData(this);
+
+            fetch('/attack', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `<pre>Error: ${error}</pre>`;
+            });
+        });
+    </script>
+</body>
+</html>
